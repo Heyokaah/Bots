@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DSE Writing Mindmap & Structure Builder</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        .card-selected {
+            ring: 3px;
+            ring-color: #6366f1;
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col">
+
+    <!-- Navigation Header -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="bg-indigo-600 text-white p-2.5 rounded-xl shadow-md">
+                    <i class="fa-solid fa-sitemap text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold text-slate-900 leading-tight">DSE Essay Mindmap & Paragraph Builder</h1>
+                    <p class="text-xs text-slate-500">Master the 3-Part Structure & Paragraph Hierarchy</p>
+                </div>
+            </div>
+
+            <!-- Header Buttons -->
+            <div class="flex items-center gap-2 flex-wrap">
+                <div class="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl border border-slate-200">
+                    <select id="topic-selector" onchange="switchTopic(this.value)" class="bg-white text-xs font-bold text-slate-700 py-1.5 px-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 max-w-[180px] sm:max-w-xs truncate">
+                        <!-- Populated by JavaScript -->
+                    </select>
+                    <button onclick="loadRandomTopic()" title="Load Random DSE Topic" class="px-2.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg shadow transition flex items-center gap-1">
+                        <i class="fa-solid fa-dice"></i>
+                        <span class="hidden sm:inline">Next Topic</span>
+                    </button>
+                    <button onclick="openAITopicModal()" title="AI Generate Custom DSE Topic" class="px-2.5 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-bold rounded-lg shadow transition flex items-center gap-1">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                        <span class="hidden sm:inline">AI Generator</span>
+                    </button>
+                </div>
+
+                <button id="btn-toggle-view" onclick="toggleView()" class="px-3.5 py-2 text-xs font-semibold rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 transition flex items-center gap-2">
+                    <i class="fa-solid fa-diagram-project text-indigo-600"></i>
+                    <span id="view-toggle-text">Diagram Mindmap View</span>
+                </button>
+                <button onclick="openCustomizer()" class="px-3.5 py-2 text-xs font-semibold rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 transition flex items-center gap-2">
+                    <i class="fa-solid fa-pen-to-square text-amber-600"></i>
+                    <span>Edit Prompt</span>
+                </button>
+                <button onclick="resetPlanner()" class="px-3.5 py-2 text-xs font-semibold rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 transition flex items-center gap-2">
+                    <i class="fa-solid fa-rotate-right text-slate-500"></i>
+                    <span>Reset</span>
+                </button>
+                <button onclick="checkAnswers()" class="px-4 py-2 text-xs font-bold rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white shadow-md transition flex items-center gap-2">
+                    <i class="fa-solid fa-circle-check"></i>
+                    <span>Check Solution</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Interactive Playground -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 flex flex-col gap-6">
+
+        <!-- Essay Question Prompt Banner -->
+        <div class="bg-slate-900 text-white rounded-2xl p-4 sm:p-5 shadow-md border border-slate-800 flex flex-col gap-2 relative">
+            <div class="flex items-center justify-between flex-wrap gap-2">
+                <div class="flex items-center gap-2">
+                    <span id="prompt-tag" class="bg-amber-400 text-slate-950 text-[10px] font-extrabold uppercase tracking-wide px-2.5 py-0.5 rounded-md">HKDSE Part B Task</span>
+                    <span id="prompt-format" class="text-xs text-slate-300 font-semibold"><i class="fa-solid fa-file-pen text-indigo-400 mr-1.5"></i>School Blog Post</span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span id="prompt-elective" class="text-[10px] bg-slate-800 text-indigo-300 px-2 py-0.5 rounded border border-indigo-500/30 font-semibold">Social Issues</span>
+                    <span id="prompt-words" class="text-xs text-slate-400"><i class="fa-solid fa-clock text-amber-400 mr-1"></i>Target: 400–500 words</span>
+                </div>
+            </div>
+            <div class="space-y-1">
+                <h2 id="prompt-title" class="text-sm sm:text-base font-bold text-amber-300">Writing Question: Addressing High Exam Stress Among Students</h2>
+                <p id="prompt-desc" class="text-xs text-slate-300 leading-relaxed">
+                    You are the Student Editor of your school magazine. Write a blog post describing the current state of exam pressure among schoolmates (<b>Part 1</b>), discussing immediate ways students can deal with this stress (<b>Part 2</b>), and suggesting long-term solutions for the school to reduce systemic pressure (<b>Part 3</b>).
+                </p>
+            </div>
+        </div>
+
+        <!-- Top Guide / Status Banner -->
+        <div class="bg-indigo-900 text-white rounded-2xl p-4 sm:p-5 shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div class="space-y-1">
+                <span class="inline-block bg-indigo-500/30 text-indigo-200 text-[10px] font-bold tracking-wider uppercase px-2.5 py-0.5 rounded-full border border-indigo-400/30">
+                    Step-by-Step Pre-Writing Activity
+                </span>
+                <h2 class="text-base sm:text-lg font-bold">Classify & Establish Paragraph Hierarchy</h2>
+                <p class="text-xs text-indigo-200 max-w-2xl">
+                    1. Assign each card below to <b>Part 1</b>, <b>Part 2</b>, or <b>Part 3</b>.<br>
+                    2. Tag each card as either an <b><span class="text-amber-300">Umbrella Point 🟠</span></b> (Topic Sentence) or a <b><span class="text-emerald-300">Supporting Detail 🔴</span></b> (Example/Elaboration).
+                </p>
+            </div>
+
+            <!-- Progress Tracker -->
+            <div class="flex items-center gap-4 bg-indigo-950/60 p-3 rounded-xl border border-indigo-700/50 self-stretch sm:self-auto justify-around">
+                <div class="text-center">
+                    <div id="stat-placed" class="text-xl font-extrabold text-amber-400">0 / 12</div>
+                    <div class="text-[10px] text-indigo-300 uppercase tracking-wider font-medium">Placed</div>
+                </div>
+                <div class="h-8 w-[1px] bg-indigo-800"></div>
+                <div class="text-center">
+                    <div id="stat-hierarchy" class="text-xl font-extrabold text-emerald-400">0 / 12</div>
+                    <div class="text-[10px] text-indigo-300 uppercase tracking-wider font-medium">Tagged</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Interactive Board: Card Pool vs Columns -->
+        <div id="classification-view" class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+
+            <!-- Left Sidebar: Scrambled Pool -->
+            <div class="lg:col-span-1 bg-white rounded-2xl border border-slate-200 shadow-sm p-4 flex flex-col h-[600px]">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-layer-group text-indigo-600"></i>
+                        <h3 class="font-bold text-sm text-slate-800">Scrambled Pool</h3>
+                    </div>
+                    <span id="pool-count-badge" class="bg-indigo-100 text-indigo-700 text-xs font-bold px-2 py-0.5 rounded-full">12 Left</span>
+                </div>
+                <p class="text-[11px] text-slate-500 mb-3">Click a card to select it, then click any section on the right to place it.</p>
+                
+                <div id="pool-container" class="flex-1 overflow-y-auto custom-scrollbar space-y-2.5 pr-1">
+                    <!-- Cards injected here via JavaScript -->
+                </div>
+            </div>
+
+            <!-- Right Area: 3 Writing Sections -->
+            <div class="lg:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-4">
+
+                <!-- PART 1 COLUMN -->
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col h-[600px] overflow-hidden">
+                    <div class="bg-slate-900 text-white p-3.5 border-b border-slate-800">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Section 1</span>
+                            <span id="p1-badge" class="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-300 font-bold">0 cards</span>
+                        </div>
+                        <h3 class="font-bold text-sm text-white">Part 1: Current Problem</h3>
+                        <p class="text-[10px] text-slate-400">Describe exam stress state</p>
+                    </div>
+
+                    <div id="zone-part1" onclick="handleZoneClick('part1')" class="flex-1 p-3 bg-slate-50/50 overflow-y-auto custom-scrollbar space-y-3 transition border-2 border-dashed border-transparent hover:border-indigo-300 cursor-pointer">
+                        <!-- Placed cards injected here -->
+                    </div>
+                </div>
+
+                <!-- PART 2 COLUMN -->
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col h-[600px] overflow-hidden">
+                    <div class="bg-indigo-900 text-white p-3.5 border-b border-indigo-800">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[10px] font-extrabold uppercase tracking-wider text-indigo-300">Section 2</span>
+                            <span id="p2-badge" class="text-[10px] bg-indigo-950 px-2 py-0.5 rounded text-indigo-200 font-bold">0 cards</span>
+                        </div>
+                        <h3 class="font-bold text-sm text-white">Part 2: Immediate Ways</h3>
+                        <p class="text-[10px] text-indigo-200">Actions for students/peers</p>
+                    </div>
+
+                    <div id="zone-part2" onclick="handleZoneClick('part2')" class="flex-1 p-3 bg-slate-50/50 overflow-y-auto custom-scrollbar space-y-3 transition border-2 border-dashed border-transparent hover:border-indigo-300 cursor-pointer">
+                        <!-- Placed cards injected here -->
+                    </div>
+                </div>
+
+                <!-- PART 3 COLUMN -->
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col h-[600px] overflow-hidden">
+                    <div class="bg-teal-900 text-white p-3.5 border-b border-teal-800">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[10px] font-extrabold uppercase tracking-wider text-teal-300">Section 3</span>
+                            <span id="p3-badge" class="text-[10px] bg-teal-950 px-2 py-0.5 rounded text-teal-200 font-bold">0 cards</span>
+                        </div>
+                        <h3 class="font-bold text-sm text-white">Part 3: Long-term Solutions</h3>
+                        <p class="text-[10px] text-teal-200">School & systemic changes</p>
+                    </div>
+
+                    <div id="zone-part3" onclick="handleZoneClick('part3')" class="flex-1 p-3 bg-slate-50/50 overflow-y-auto custom-scrollbar space-y-3 transition border-2 border-dashed border-transparent hover:border-indigo-300 cursor-pointer">
+                        <!-- Placed cards injected here -->
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Alternate View: Visual Mindmap Diagram -->
+        <div id="diagram-view" class="hidden bg-white rounded-2xl border border-slate-200 shadow-sm p-6 flex-col min-h-[600px] relative overflow-x-auto">
+            <div class="flex items-center justify-between mb-4 border-b border-slate-100 pb-3">
+                <div>
+                    <h3 class="font-bold text-slate-900 text-base">Visual Mindmap Blueprint</h3>
+                    <p class="text-xs text-slate-500">Interactive hierarchical layout of your essay structure</p>
+                </div>
+                <div class="flex items-center gap-4 text-xs font-semibold">
+                    <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-amber-400"></span> Umbrella Point (Topic Sentence)</span>
+                    <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-emerald-400"></span> Supporting Detail (Elaboration/Example)</span>
+                </div>
+            </div>
+
+            <div id="diagram-canvas" class="flex-1 flex flex-col justify-center items-center gap-8 py-6 min-w-[900px]">
+                <!-- Interactive Mindmap rendered via JS -->
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Modal: Feedback & Results -->
+    <div id="modal-results" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 relative">
+            <div class="text-center space-y-3">
+                <div id="modal-icon-bg" class="w-14 h-14 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center mx-auto text-2xl">
+                    <i class="fa-solid fa-trophy"></i>
+                </div>
+                <h3 id="modal-title" class="text-xl font-bold text-slate-900">Structure Evaluation</h3>
+                <p id="modal-subtitle" class="text-xs text-slate-500">Here is how well your outline matches the recommended DSE blueprint.</p>
+            </div>
+
+            <div class="my-6 space-y-3">
+                <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 flex justify-between items-center text-xs">
+                    <span class="font-medium text-slate-700">Section Categorization:</span>
+                    <span id="score-section" class="font-bold text-indigo-600 text-sm">0 / 12 Correct</span>
+                </div>
+                <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 flex justify-between items-center text-xs">
+                    <span class="font-medium text-slate-700">Paragraph Hierarchy (Umbrella vs Detail):</span>
+                    <span id="score-hierarchy" class="font-bold text-indigo-600 text-sm">0 / 12 Correct</span>
+                </div>
+                <div id="feedback-details" class="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 leading-relaxed">
+                    <!-- Specific feedback message -->
+                </div>
+            </div>
+
+            <div class="flex gap-3">
+                <button onclick="closeModal('modal-results')" class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition">
+                    Keep Editing
+                </button>
+                <button onclick="revealModelSolution()" class="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-md transition">
+                    Auto-Fix to Ideal Blueprint
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Teacher Prompt & Point Editor -->
+    <div id="modal-customizer" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-slate-100 relative max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center pb-3 border-b border-slate-100">
+                <h3 class="text-base font-bold text-slate-900">Customizer: Edit Essay Topic & Cards</h3>
+                <button onclick="closeModal('modal-customizer')" class="text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <p class="text-xs text-slate-500 my-2">Use this to customize the points for any future HKDSE writing topic!</p>
+
+            <div class="flex-1 overflow-y-auto custom-scrollbar space-y-4 py-2 pr-1" id="customizer-card-list">
+                <!-- Editable list injected here -->
+            </div>
+
+            <div class="flex gap-2 pt-3 border-t border-slate-100 mt-2">
+                <button onclick="closeModal('modal-customizer')" class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition">
+                    Cancel
+                </button>
+                <button onclick="saveCustomizations()" class="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow transition">
+                    Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: AI DSE Topic Generator -->
+    <div id="modal-ai-generator" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 relative">
+            <div class="flex justify-between items-center pb-3 border-b border-slate-100">
+                <div class="flex items-center gap-2">
+                    <div class="p-2 bg-amber-100 text-amber-700 rounded-xl">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-slate-900">AI DSE Topic Generator</h3>
+                        <p class="text-[11px] text-slate-500">Generates complete 3-part essay tasks & 12 cards</p>
+                    </div>
+                </div>
+                <button onclick="closeModal('modal-ai-generator')" class="text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div class="my-4 space-y-3">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Select HKDSE Elective Theme:</label>
+                    <select id="ai-elective-select" class="w-full text-xs p-2.5 rounded-xl border border-slate-300 bg-slate-50 font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="Social Issues">Learning English through Social Issues</option>
+                        <option value="Technology & Workplace">Learning English through Workplace Communication & Tech</option>
+                        <option value="Sports & Health">Learning English through Sports Communication</option>
+                        <option value="Debating & Community">Learning English through Debating & Public Speaking</option>
+                        <option value="Short Stories & Culture">Learning English through Popular Culture / Arts</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Custom Focus / Topic (Optional):</label>
+                    <input type="text" id="ai-custom-keywords" placeholder="e.g. AI homework tools, youth mental health, tourism" class="w-full text-xs p-2.5 rounded-xl border border-slate-300 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+
+                <div id="ai-loading-status" class="hidden p-3 bg-indigo-50 border border-indigo-200 rounded-xl flex items-center gap-3">
+                    <i class="fa-solid fa-spinner fa-spin text-indigo-600 text-lg"></i>
+                    <div class="text-xs text-indigo-900 font-semibold">
+                        Generating new DSE writing task & 12 structured cards...
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex gap-2 pt-2 border-t border-slate-100">
+                <button onclick="closeModal('modal-ai-generator')" class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition">
+                    Cancel
+                </button>
+                <button id="btn-run-ai-gen" onclick="generateAIDSETopic()" class="flex-1 py-2.5 bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-bold rounded-xl shadow-md transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-bolt"></i>
+                    <span>Generate Practice</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Message Toast Container -->
+    <div id="toast" class="fixed bottom-5 right-5 bg-slate-900 text-white text-xs px-4 py-3 rounded-xl shadow-2xl transition-all opacity-0 translate-y-5 pointer-events-none z-50 flex items-center gap-2">
+        <i id="toast-icon" class="fa-solid fa-circle-info text-indigo-400"></i>
+        <span id="toast-msg">Notification</span>
+    </div>
+
+    <script>
+        const topicsBank = [
+            {
+                id: "dse-2023-stress",
+                tag: "HKDSE Paper 2 Inspired",
+                format: "School Blog Post",
+                elective: "Social Issues",
+                words: "Target: 400–500 words",
+                title: "Addressing High Exam Stress & Well-being Among Students",
+                desc: "Write a blog post describing the current state of exam pressure among schoolmates (Part 1), discussing immediate ways students can deal with this stress (Part 2), and suggesting long-term solutions for the school to reduce systemic pressure (Part 3).",
+                cards: [
+                    { id: "card-1", text: "Students face overwhelming anxiety as major examinations draw near.", section: "part1", hierarchy: "umbrella" },
+                    { id: "card-2", text: "Reading textbooks frantically during recess instead of relaxing.", section: "part1", hierarchy: "detail", parentId: "card-1" },
+                    { id: "card-3", text: "Constantly comparing test marks with classmates and feeling inferior.", section: "part1", hierarchy: "detail", parentId: "card-1" },
+                    { id: "card-4", text: "Engaging in regular active rest helps lower cortisol levels and refresh the mind.", section: "part2", hierarchy: "umbrella" },
+                    { id: "card-5", text: "Playing 30 minutes of basketball, running, or swimming daily.", section: "part2", hierarchy: "detail", parentId: "card-4" },
+                    { id: "card-6", text: "Forming peer support groups allows students to share emotional and study burdens.", section: "part2", hierarchy: "umbrella" },
+                    { id: "card-7", text: "Studying together, sharing family issues, and exchanging learning strategies.", section: "part2", hierarchy: "detail", parentId: "card-6" },
+                    { id: "card-8", text: "While some argue sacrificing sleep yields higher marks, sleep loss destroys memory.", section: "part2", hierarchy: "umbrella" },
+                    { id: "card-9", text: "Severe sleep deprivation leaves students exhausted on exam day.", section: "part2", hierarchy: "detail", parentId: "card-8" },
+                    { id: "card-10", text: "School management must implement policies to lighten student workload.", section: "part3", hierarchy: "umbrella" },
+                    { id: "card-11", text: "Teachers reducing homework and temporarily suspending extracurriculars before exams.", section: "part3", hierarchy: "detail", parentId: "card-10" },
+                    { id: "card-12", text: "Establishing healthy biological routines to maintain long-term mental well-being.", section: "part3", hierarchy: "detail", parentId: "card-10" }
+                ]
+            },
+            {
+                id: "dse-2022-fastfashion",
+                tag: "HKDSE Social Issues",
+                format: "Letter to the Editor",
+                elective: "Social Issues & Environment",
+                words: "Target: 400–500 words",
+                title: "Tackling the Fast Fashion Waste Crisis in Hong Kong",
+                desc: "Write a letter to the editor describing the environmental impact of fast fashion among youth (Part 1), proposing sustainable habits students can adopt (Part 2), and suggesting government and industry measures to tackle clothing waste (Part 3).",
+                cards: [
+                    { id: "card-1", text: "Cheap trendy clothing leads teenagers to buy excessively and discard clothes quickly.", section: "part1", hierarchy: "umbrella" },
+                    { id: "card-2", text: "Overflowing local landfills with tons of synthetic non-biodegradable fabrics.", section: "part1", hierarchy: "detail", parentId: "card-1" },
+                    { id: "card-3", text: "Harmful chemical dyes polluting rivers in manufacturing countries.", section: "part1", hierarchy: "detail", parentId: "card-1" },
+                    { id: "card-4", text: "Young consumers can adopt sustainable wardrobe practices to curb demand.", section: "part2", hierarchy: "umbrella" },
+                    { id: "card-5", text: "Organizing secondhand clothing swaps and buying vintage items.", section: "part2", hierarchy: "detail", parentId: "card-4" },
+                    { id: "card-6", text: "Prioritizing quality durable garments over cheap low-quality fad items.", section: "part2", hierarchy: "detail", parentId: "card-4" },
+                    { id: "card-7", text: "Learning simple sewing skills to repair minor damages instead of throwing away.", section: "part2", hierarchy: "umbrella" },
+                    { id: "card-8", text: "Fixing loose buttons or torn seams extends clothing lifespan by years.", section: "part2", hierarchy: "detail", parentId: "card-7" },
+                    { id: "card-9", text: "The government and fashion industry must enforce eco-friendly regulations.", section: "part3", hierarchy: "umbrella" },
+                    { id: "card-10", text: "Imposing textile recycling quotas on major retail brands in Hong Kong.", section: "part3", hierarchy: "detail", parentId: "card-9" },
+                    { id: "card-11", text: "Educating the public through eco-labeling on garment carbon footprints.", section: "part3", hierarchy: "detail", parentId: "card-9" },
+                    { id: "card-12", text: "Offering tax incentives for eco-textile innovation and circular fashion startups.", section: "part3", hierarchy: "detail", parentId: "card-9" }
+                ]
+            },
+            {
+                id: "dse-2021-esports",
+                tag: "HKDSE Sports Communication",
+                format: "Feature Article",
+                elective: "Sports & Technology",
+                words: "Target: 400–500 words",
+                title: "Integrating E-Sports into Hong Kong Secondary Schools",
+                desc: "Write a feature article examining the rapid rise of competitive gaming among students (Part 1), highlighting positive skills gained through e-sports (Part 2), and outlining school guidelines to prevent gaming addiction (Part 3).",
+                cards: [
+                    { id: "card-1", text: "E-sports have evolved from casual gaming into a multi-million dollar global industry.", section: "part1", hierarchy: "umbrella" },
+                    { id: "card-2", text: "Teenagers spending hours watching live tournaments and pursuing professional gaming.", section: "part1", hierarchy: "detail", parentId: "card-1" },
+                    { id: "card-3", text: "Traditional educators fearing gaming detracts from academic performance.", section: "part1", hierarchy: "detail", parentId: "card-1" },
+                    { id: "card-4", text: "Structured school e-sports teams foster valuable cognitive and interpersonal skills.", section: "part2", hierarchy: "umbrella" },
+                    { id: "card-5", text: "Developing split-second tactical communication and strategic problem-solving.", section: "part2", hierarchy: "detail", parentId: "card-4" },
+                    { id: "card-6", text: "Cultivating sportsmanship and teamwork among students who dislike traditional sports.", section: "part2", hierarchy: "detail", parentId: "card-4" },
+                    { id: "card-7", text: "Balancing screen time is crucial to maintain physical health and social development.", section: "part2", hierarchy: "umbrella" },
+                    { id: "card-8", text: "Preventing eye strain, poor posture, and sedentary health risks.", section: "part2", hierarchy: "detail", parentId: "card-7" },
+                    { id: "card-9", text: "Schools must institute strict gaming balance guidelines alongside e-sports clubs.", section: "part3", hierarchy: "umbrella" },
+                    { id: "card-10", text: "Mandating minimum academic GPA criteria for students to join e-sports teams.", section: "part3", hierarchy: "detail", parentId: "card-9" },
+                    { id: "card-11", text: "Including compulsory physical fitness warm-ups before any gaming training session.", section: "part3", hierarchy: "detail", parentId: "card-9" },
+                    { id: "card-12", text: "Inviting sports psychologists to coach students on healthy digital boundaries.", section: "part3", hierarchy: "detail", parentId: "card-9" }
+                ]
+            }
+        ];
+
+        let currentTopicId = topicsBank[0].id;
+        let cardsData = JSON.parse(JSON.stringify(topicsBank[0].cards));
+        let userState = {};
+        let selectedCardId = null;
+
+        window.onload = function() {
+            populateTopicDropdown();
+            loadTopic(currentTopicId);
+        };
+
+        function populateTopicDropdown() {
+            const selector = document.getElementById('topic-selector');
+            selector.innerHTML = '';
+            topicsBank.forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = t.id;
+                opt.textContent = `${t.elective}: ${t.title}`;
+                selector.appendChild(opt);
+            });
+        }
+
+        function switchTopic(topicId) {
+            loadTopic(topicId);
+        }
+
+        function loadRandomTopic() {
+            const otherTopics = topicsBank.filter(t => t.id !== currentTopicId);
+            const random = otherTopics[Math.floor(Math.random() * otherTopics.length)] || topicsBank[0];
+            document.getElementById('topic-selector').value = random.id;
+            loadTopic(random.id);
+            showToast(`Loaded new DSE Topic: ${random.title}`, "fa-dice");
+        }
+
+        function loadTopic(topicId) {
+            const topic = topicsBank.find(t => t.id === topicId) || topicsBank[0];
+            currentTopicId = topic.id;
+            cardsData = JSON.parse(JSON.stringify(topic.cards));
+
+            // Update UI Banner
+            document.getElementById('prompt-tag').textContent = topic.tag || "HKDSE Part B Task";
+            document.getElementById('prompt-format').innerHTML = `<i class="fa-solid fa-file-pen text-indigo-400 mr-1.5"></i>${topic.format}`;
+            document.getElementById('prompt-elective').textContent = topic.elective;
+            document.getElementById('prompt-words').innerHTML = `<i class="fa-solid fa-clock text-amber-400 mr-1"></i>${topic.words}`;
+            document.getElementById('prompt-title').textContent = topic.title;
+            document.getElementById('prompt-desc').innerHTML = topic.desc;
+
+            initApp();
+        }
+
+        function initApp() {
+            userState = {};
+            cardsData.forEach(card => {
+                userState[card.id] = {
+                    userSection: null,
+                    userHierarchy: null
+                };
+            });
+            selectedCardId = null;
+            renderPool();
+            renderZones();
+            updateStats();
+            if (!document.getElementById('diagram-view').classList.contains('hidden')) {
+                renderDiagram();
+            }
+        }
+
+        function renderPool() {
+            const poolEl = document.getElementById('pool-container');
+            poolEl.innerHTML = '';
+
+            const unplacedCards = cardsData.filter(card => userState[card.id].userSection === null);
+
+            if (unplacedCards.length === 0) {
+                poolEl.innerHTML = `
+                    <div class="p-6 text-center text-slate-400 text-xs border border-dashed rounded-xl my-auto">
+                        <i class="fa-solid fa-circle-check text-emerald-500 text-2xl mb-2 block"></i>
+                        All cards have been placed!
+                    </div>
+                `;
+                return;
+            }
+
+            unplacedCards.forEach((card, index) => {
+                const cardEl = document.createElement('div');
+                const isSelected = (selectedCardId === card.id);
+
+                cardEl.className = `p-3 rounded-xl border text-xs cursor-pointer transition-all ${
+                    isSelected 
+                        ? 'border-indigo-600 bg-indigo-50/80 shadow-md ring-2 ring-indigo-500 scale-[1.02]' 
+                        : 'border-slate-200 bg-white hover:border-indigo-300 hover:shadow-sm'
+                }`;
+
+                cardEl.onclick = (e) => selectCard(card.id, e);
+
+                cardEl.innerHTML = `
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase">Card #${card.id.split('-')[1] || (index+1)}</span>
+                        ${isSelected ? '<span class="text-[10px] bg-indigo-600 text-white font-bold px-1.5 py-0.5 rounded">Selected</span>' : ''}
+                    </div>
+                    <p class="text-slate-800 font-medium leading-snug">${card.text}</p>
+                `;
+
+                poolEl.appendChild(cardEl);
+            });
+        }
+
+        function renderZones() {
+            ['part1', 'part2', 'part3'].forEach(secKey => {
+                const zoneEl = document.getElementById(`zone-${secKey}`);
+                zoneEl.innerHTML = '';
+
+                const placedCards = cardsData.filter(card => userState[card.id].userSection === secKey);
+
+                if (placedCards.length === 0) {
+                    zoneEl.innerHTML = `
+                        <div class="h-full flex items-center justify-center text-center text-slate-400 text-xs border-2 border-dashed border-slate-200 rounded-xl p-4">
+                            Click a selected card to place it here
+                        </div>
+                    `;
+                    return;
+                }
+
+                placedCards.forEach(card => {
+                    const cardEl = document.createElement('div');
+                    const hier = userState[card.id].userHierarchy;
+
+                    let hierClass = "border-slate-200 bg-white";
+                    if (hier === 'umbrella') hierClass = "border-amber-400 bg-amber-50/60";
+                    if (hier === 'detail') hierClass = "border-emerald-400 bg-emerald-50/60";
+
+                    cardEl.className = `p-3 rounded-xl border text-xs space-y-2 shadow-xs transition ${hierClass}`;
+
+                    cardEl.innerHTML = `
+                        <div class="flex items-start justify-between gap-2">
+                            <p class="text-slate-800 font-medium leading-snug flex-1">${card.text}</p>
+                            <button onclick="returnToPool('${card.id}', event)" title="Return to pool" class="text-slate-400 hover:text-red-500 p-1">
+                                <i class="fa-solid fa-arrow-rotate-left"></i>
+                            </button>
+                        </div>
+                        <div class="flex items-center gap-1.5 pt-1 border-t border-slate-100">
+                            <span class="text-[10px] font-bold text-slate-400 mr-1">Tag:</span>
+                            <button onclick="setHierarchy('${card.id}', 'umbrella', event)" class="px-2 py-0.5 text-[10px] font-bold rounded-md transition ${
+                                hier === 'umbrella' 
+                                    ? 'bg-amber-500 text-white shadow-xs' 
+                                    : 'bg-slate-100 text-slate-600 hover:bg-amber-100 hover:text-amber-800'
+                            }">
+                                🟠 Umbrella
+                            </button>
+                            <button onclick="setHierarchy('${card.id}', 'detail', event)" class="px-2 py-0.5 text-[10px] font-bold rounded-md transition ${
+                                hier === 'detail' 
+                                    ? 'bg-emerald-600 text-white shadow-xs' 
+                                    : 'bg-slate-100 text-slate-600 hover:bg-emerald-100 hover:text-emerald-800'
+                            }">
+                                🔴 Detail
+                            </button>
+                        </div>
+                    `;
+
+                    zoneEl.appendChild(cardEl);
+                });
+            });
+        }
+
+        function selectCard(cardId, e) {
+            if (e) e.stopPropagation();
+            if (selectedCardId === cardId) {
+                selectedCardId = null;
+            } else {
+                selectedCardId = cardId;
+            }
+            renderPool();
+        }
+
+        function handleZoneClick(secKey) {
+            if (!selectedCardId) return;
+            userState[selectedCardId].userSection = secKey;
+            selectedCardId = null;
+            renderPool();
+            renderZones();
+            updateStats();
+            if (!document.getElementById('diagram-view').classList.contains('hidden')) {
+                renderDiagram();
+            }
+        }
+
+        function setHierarchy(cardId, hierType, e) {
+            if (e) e.stopPropagation();
+            if (userState[cardId].userHierarchy === hierType) {
+                userState[cardId].userHierarchy = null;
+            } else {
+                userState[cardId].userHierarchy = hierType;
+            }
+            renderZones();
+            updateStats();
+            if (!document.getElementById('diagram-view').classList.contains('hidden')) {
+                renderDiagram();
+            }
+        }
+
+        function returnToPool(cardId, e) {
+            if (e) e.stopPropagation();
+            userState[cardId].userSection = null;
+            userState[cardId].userHierarchy = null;
+            if (selectedCardId === cardId) selectedCardId = null;
+            renderPool();
+            renderZones();
+            updateStats();
+            if (!document.getElementById('diagram-view').classList.contains('hidden')) {
+                renderDiagram();
+            }
+        }
+
+        function updateStats() {
+            const total = cardsData.length;
+            let placed = 0;
+            let tagged = 0;
+
+            let p1Count = 0, p2Count = 0, p3Count = 0;
+
+            cardsData.forEach(c => {
+                const st = userState[c.id];
+                if (st.userSection) {
+                    placed++;
+                    if (st.userSection === 'part1') p1Count++;
+                    if (st.userSection === 'part2') p2Count++;
+                    if (st.userSection === 'part3') p3Count++;
+                }
+                if (st.userHierarchy) tagged++;
+            });
+
+            document.getElementById('stat-placed').textContent = `${placed} / ${total}`;
+            document.getElementById('stat-hierarchy').textContent = `${tagged} / ${total}`;
+
+            document.getElementById('p1-badge').textContent = `${p1Count} cards`;
+            document.getElementById('p2-badge').textContent = `${p2Count} cards`;
+            document.getElementById('p3-badge').textContent = `${p3Count} cards`;
+
+            const poolCount = total - placed;
+            document.getElementById('pool-count-badge').textContent = `${poolCount} Left`;
+        }
+
+        function toggleView() {
+            const classView = document.getElementById('classification-view');
+            const diagView = document.getElementById('diagram-view');
+            const toggleBtnText = document.getElementById('view-toggle-text');
+
+            if (classView.classList.contains('hidden')) {
+                classView.classList.remove('hidden');
+                diagView.classList.add('hidden');
+                toggleBtnText.textContent = "Diagram Mindmap View";
+            } else {
+                classView.classList.add('hidden');
+                diagView.classList.remove('hidden');
+                toggleBtnText.textContent = "Card Sorting View";
+                renderDiagram();
+            }
+        }
+
+        function renderDiagram() {
+            const canvas = document.getElementById('diagram-canvas');
+            canvas.innerHTML = '';
+
+            const currentTopic = topicsBank.find(t => t.id === currentTopicId) || topicsBank[0];
+
+            // Center Topic Hub
+            const centerNode = document.createElement('div');
+            centerNode.className = "bg-slate-900 text-white font-extrabold px-6 py-3.5 rounded-2xl shadow-xl border-2 border-indigo-500 text-center text-sm z-10 w-full max-w-xl";
+            centerNode.innerHTML = `
+                <div class="text-[10px] text-amber-400 uppercase tracking-widest font-extrabold mb-0.5">Essay Topic Blueprint</div>
+                <div class="text-sm font-bold"><i class="fa-solid fa-pen-nib text-indigo-400 mr-2"></i>${currentTopic.format}: ${currentTopic.title}</div>
+            `;
+
+            const sectionsRow = document.createElement('div');
+            sectionsRow.className = "grid grid-cols-1 md:grid-cols-3 gap-6 w-full";
+
+            ['part1', 'part2', 'part3'].forEach((secKey) => {
+                const secCol = document.createElement('div');
+                secCol.className = "bg-slate-50 rounded-2xl p-4 border border-slate-200 flex flex-col gap-3 min-h-[400px]";
+
+                const titleMap = {
+                    part1: "PART 1: Current Problem / Context",
+                    part2: "PART 2: Immediate Ways & Actions",
+                    part3: "PART 3: Long-term Systemic Solutions"
+                };
+
+                secCol.innerHTML = `<div class="bg-indigo-950 text-white text-xs font-bold p-2.5 rounded-xl text-center shadow">${titleMap[secKey]}</div>`;
+
+                const placedInSec = cardsData.filter(c => userState[c.id].userSection === secKey);
+
+                if (placedInSec.length === 0) {
+                    secCol.innerHTML += `<div class="text-center text-slate-400 text-xs py-12 border border-dashed rounded-xl">No cards assigned to this section yet.</div>`;
+                } else {
+                    const umbrellas = placedInSec.filter(c => userState[c.id].userHierarchy === 'umbrella');
+                    const orphanDetails = placedInSec.filter(c => userState[c.id].userHierarchy === 'detail' && (!c.parentId || !placedInSec.some(u => u.id === c.parentId && userState[u.id].userHierarchy === 'umbrella')));
+                    const untagged = placedInSec.filter(c => !userState[c.id].userHierarchy);
+
+                    umbrellas.forEach(u => {
+                        const uGroup = document.createElement('div');
+                        uGroup.className = "bg-amber-50/90 border-2 border-amber-400 rounded-xl p-3 space-y-2.5 shadow-sm";
+                        
+                        const attachedDetails = placedInSec.filter(c => c.parentId === u.id && userState[c.id].userHierarchy === 'detail');
+
+                        let detailsHtml = '';
+                        if (attachedDetails.length > 0) {
+                            detailsHtml = attachedDetails.map(d => `
+                                <div class="bg-emerald-50 border border-emerald-300 p-2 rounded-lg text-xs text-slate-800 flex items-start gap-2 shadow-xs">
+                                    <span class="text-emerald-600 font-extrabold text-sm leading-none mt-0.5">↳</span>
+                                    <div class="flex-1">
+                                        <span class="text-[9px] font-bold text-emerald-800 uppercase block mb-0.5">Supporting Detail</span>
+                                        <span>${d.text}</span>
+                                    </div>
+                                </div>
+                            `).join('');
+                        } else {
+                            detailsHtml = `<div class="text-[11px] text-amber-700/70 italic p-1.5 border border-dashed border-amber-300 rounded">No supporting details linked under this umbrella yet.</div>`;
+                        }
+
+                        uGroup.innerHTML = `
+                            <div class="flex items-center justify-between border-b border-amber-200 pb-1.5">
+                                <span class="bg-amber-500 text-white text-[9px] font-extrabold px-2 py-0.5 rounded-md uppercase tracking-wider flex items-center gap-1">
+                                    🟠 Umbrella Topic Sentence
+                                </span>
+                            </div>
+                            <p class="text-xs text-slate-900 font-semibold leading-relaxed">${u.text}</p>
+                            <div class="pl-2 border-l-2 border-amber-400 space-y-2 pt-1">
+                                ${detailsHtml}
+                            </div>
+                        `;
+                        secCol.appendChild(uGroup);
+                    });
+
+                    if (orphanDetails.length > 0) {
+                        const orphanBox = document.createElement('div');
+                        orphanBox.className = "bg-emerald-50/50 border border-emerald-200 rounded-xl p-2.5 space-y-2";
+                        orphanBox.innerHTML = `<div class="text-[10px] font-bold text-emerald-800 uppercase">Unlinked Supporting Details:</div>`;
+                        orphanDetails.forEach(d => {
+                            orphanBox.innerHTML += `
+                                <div class="bg-emerald-50 border border-emerald-300 p-2 rounded-lg text-xs text-slate-700 flex items-start gap-1.5">
+                                    <span class="text-emerald-600 font-bold">🔴</span>
+                                    <span>${d.text}</span>
+                                </div>
+                            `;
+                        });
+                        secCol.appendChild(orphanBox);
+                    }
+
+                    if (untagged.length > 0) {
+                        const unContainer = document.createElement('div');
+                        unContainer.className = "space-y-1.5 pt-2 border-t border-slate-200 opacity-75";
+                        unContainer.innerHTML = `<div class="text-[10px] font-bold text-slate-500 uppercase">Untagged Cards:</div>`;
+                        untagged.forEach(un => {
+                            unContainer.innerHTML += `<div class="bg-white border border-slate-300 p-2 rounded-lg text-xs text-slate-600">${un.text}</div>`;
+                        });
+                        secCol.appendChild(unContainer);
+                    }
+                }
+
+                sectionsRow.appendChild(secCol);
+            });
+
+            canvas.appendChild(centerNode);
+            canvas.appendChild(sectionsRow);
+        }
+
+        function checkAnswers() {
+            let sectionCorrect = 0;
+            let hierarchyCorrect = 0;
+            const total = cardsData.length;
+
+            cardsData.forEach(card => {
+                const st = userState[card.id];
+                if (st.userSection === card.section) sectionCorrect++;
+                if (st.userHierarchy === card.hierarchy) hierarchyCorrect++;
+            });
+
+            document.getElementById('score-section').textContent = `${sectionCorrect} / ${total} Correct`;
+            document.getElementById('score-hierarchy').textContent = `${hierarchyCorrect} / ${total} Correct`;
+
+            const feedbackEl = document.getElementById('feedback-details');
+            if (sectionCorrect === total && hierarchyCorrect === total) {
+                feedbackEl.className = "p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-900 leading-relaxed";
+                feedbackEl.innerHTML = `<b>🎉 Perfect Blueprint!</b> You successfully classified all 3 sections and correctly identified every Topic Sentence (Umbrella Point) vs Supporting Detail.`;
+            } else {
+                feedbackEl.className = "p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 leading-relaxed";
+                feedbackEl.innerHTML = `<b>💡 Almost there!</b> Umbrella points are general summary statements (Topic Sentences), while supporting details give specific examples or actions.`;
+            }
+
+            document.getElementById('modal-results').classList.remove('hidden');
+        }
+
+        function revealModelSolution() {
+            cardsData.forEach(card => {
+                userState[card.id].userSection = card.section;
+                userState[card.id].userHierarchy = card.hierarchy;
+            });
+            closeModal('modal-results');
+            renderPool();
+            renderZones();
+            updateStats();
+            showToast("Updated to Ideal DSE Blueprint Model Solution!", "fa-circle-check");
+        }
+
+        function openCustomizer() {
+            const listEl = document.getElementById('customizer-card-list');
+            listEl.innerHTML = '';
+
+            cardsData.forEach((card, idx) => {
+                const cardRow = document.createElement('div');
+                cardRow.className = "bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2";
+                cardRow.innerHTML = `
+                    <div class="flex items-center justify-between text-xs font-bold text-slate-700">
+                        <span>Card #${idx + 1}</span>
+                        <div class="flex gap-2 text-[10px]">
+                            <select id="cust-sec-${card.id}" class="bg-white border rounded px-1.5 py-0.5">
+                                <option value="part1" ${card.section==='part1'?'selected':''}>Part 1</option>
+                                <option value="part2" ${card.section==='part2'?'selected':''}>Part 2</option>
+                                <option value="part3" ${card.section==='part3'?'selected':''}>Part 3</option>
+                            </select>
+                            <select id="cust-hier-${card.id}" class="bg-white border rounded px-1.5 py-0.5">
+                                <option value="umbrella" ${card.hierarchy==='umbrella'?'selected':''}>Umbrella 🟠</option>
+                                <option value="detail" ${card.hierarchy==='detail'?'selected':''}>Detail 🔴</option>
+                            </select>
+                        </div>
+                    </div>
+                    <textarea id="cust-text-${card.id}" class="w-full text-xs p-2 border rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500" rows="2">${card.text}</textarea>
+                `;
+                listEl.appendChild(cardRow);
+            });
+
+            document.getElementById('modal-customizer').classList.remove('hidden');
+        }
+
+        function saveCustomizations() {
+            cardsData.forEach(card => {
+                const textVal = document.getElementById(`cust-text-${card.id}`).value;
+                const secVal = document.getElementById(`cust-sec-${card.id}`).value;
+                const hierVal = document.getElementById(`cust-hier-${card.id}`).value;
+
+                card.text = textVal;
+                card.section = secVal;
+                card.hierarchy = hierVal;
+            });
+
+            closeModal('modal-customizer');
+            initApp();
+            showToast("Custom prompt & cards saved successfully!", "fa-floppy-disk");
+        }
+
+        function openAITopicModal() {
+            document.getElementById('modal-ai-generator').classList.remove('hidden');
+        }
+
+        function generateAIDSETopic() {
+            const elective = document.getElementById('ai-elective-select').value;
+            const keywords = document.getElementById('ai-custom-keywords').value.trim() || "Youth & Modern Society";
+            const btn = document.getElementById('btn-run-ai-gen');
+            const statusEl = document.getElementById('ai-loading-status');
+
+            btn.disabled = true;
+            btn.classList.add('opacity-50');
+            statusEl.classList.remove('hidden');
+
+            setTimeout(() => {
+                const generatedTopic = createPresetOrAITopic(elective, keywords);
+                
+                topicsBank.unshift(generatedTopic);
+                populateTopicDropdown();
+                document.getElementById('topic-selector').value = generatedTopic.id;
+                loadTopic(generatedTopic.id);
+
+                btn.disabled = false;
+                btn.classList.remove('opacity-50');
+                statusEl.classList.add('hidden');
+                closeModal('modal-ai-generator');
+                showToast(`Generated: ${generatedTopic.title}`, "fa-wand-magic-sparkles");
+            }, 800);
+        }
+
+        function createPresetOrAITopic(elective, keywords) {
+            const timeId = Date.now();
+            return {
+                id: "ai-gen-" + timeId,
+                tag: "AI Generated Practice",
+                format: "Opinion Article & Proposal",
+                elective: elective,
+                words: "Target: 400–500 words",
+                title: `${elective}: Tackling ${keywords}`,
+                desc: `Write a comprehensive HKDSE English Paper 2 response analyzing the impact of <b>${keywords}</b> in Hong Kong society (<b>Part 1</b>), providing practical steps individuals or students can implement immediately (<b>Part 2</b>), and recommending long-term policies for community and government institutions (<b>Part 3</b>).`,
+                cards: [
+                    { id: "card-1", text: `Rapid developments in ${keywords} have fundamentally transformed daily routines for young people in Hong Kong.`, section: "part1", hierarchy: "umbrella" },
+                    { id: "card-2", text: `Increasing reliance on online platforms leading to reduced face-to-face social interactions.`, section: "part1", hierarchy: "detail", parentId: "card-1" },
+                    { id: "card-3", text: `High pressure to adapt quickly causing stress among students and parents alike.`, section: "part1", hierarchy: "detail", parentId: "card-1" },
+                    { id: "card-4", text: `Individual students can adopt disciplined daily habits to build resilience and focus.`, section: "part2", hierarchy: "umbrella" },
+                    { id: "card-5", text: `Setting designated screen-free periods during homework and dinner hours.`, section: "part2", hierarchy: "detail", parentId: "card-4" },
+                    { id: "card-6", text: `Actively seeking out peer discussion groups to share experiences and coping techniques.`, section: "part2", hierarchy: "umbrella" },
+                    { id: "card-7", text: "Organizing weekly study circles and wellness workshops on campus.", section: "part2", hierarchy: "detail", parentId: "card-6" },
+                    { id: "card-8", text: "Maintaining physical wellness directly supports mental sharpness when facing modern challenges.", section: "part2", hierarchy: "umbrella" },
+                    { id: "card-9", text: "Engaging in at least 30 minutes of aerobic exercise three times a week.", section: "part2", hierarchy: "detail", parentId: "card-8" },
+                    { id: "card-10", text: `Educational institutions must establish structured frameworks and resources regarding ${keywords}.`, section: "part3", hierarchy: "umbrella" },
+                    { id: "card-11", text: "Integrating comprehensive digital literacy and well-being modules into school curricula.", section: "part3", hierarchy: "detail", parentId: "card-10" },
+                    { id: "card-12", text: "Partnering with non-profit organizations to offer professional counseling for students.", section: "part3", hierarchy: "detail", parentId: "card-10" }
+                ]
+            };
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        function resetPlanner() {
+            initApp();
+            showToast("Planner reset to default.", "fa-rotate-right");
+        }
+
+        function showToast(msg, icon = 'fa-circle-info') {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-msg').textContent = msg;
+            document.getElementById('toast-icon').className = `fa-solid ${icon} text-indigo-400`;
+
+            toast.classList.remove('opacity-0', 'translate-y-5', 'pointer-events-none');
+            toast.classList.add('opacity-100', 'translate-y-0');
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-5', 'pointer-events-none');
+                toast.classList.remove('opacity-100', 'translate-y-0');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
