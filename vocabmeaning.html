@@ -1,0 +1,1196 @@
+import React, { useState, useEffect, useMemo } from 'react';
+import {
+  BookOpen,
+  Sparkles,
+  CheckCircle2,
+  XCircle,
+  Lightbulb,
+  Award,
+  RotateCcw,
+  BrainCircuit,
+  ArrowRight,
+  HelpCircle,
+  Filter,
+  Flame,
+  Target,
+  GraduationCap,
+  RefreshCw,
+  Zap,
+  Check,
+  ChevronRight,
+  Eye,
+  Sliders,
+  FileText
+} from 'lucide-react';
+
+// ==========================================
+// 1. CURATED HKDSE S4 PRACTICE DATABASE
+// ==========================================
+const CURATED_QUESTIONS = [
+  {
+    id: "curated-1",
+    topic: "Mental Health & Social Media",
+    difficulty: "S4 Foundation",
+    lines: [
+      "1 Many teenagers in Hong Kong face unprecedented academic pressure and social expectations.",
+      "2 While maintaining an active online presence can foster social connection, it frequently",
+      "3 triggers heightened anxiety when individuals continuously evaluate their self-worth against",
+      "4 idealised digital portrayals. Consequently, educators are advocating for balanced digital habits."
+    ],
+    passageRaw: "Many teenagers in Hong Kong face unprecedented academic pressure and social expectations. While maintaining an active online presence can foster social connection, it frequently triggers heightened anxiety when individuals continuously evaluate their self-worth against idealised digital portrayals. Consequently, educators are advocating for balanced digital habits.",
+    questionType: "Synonym",
+    questionText: "Find a word in paragraph 1 with a similar meaning to 'encourages' or 'promotes'.",
+    targetWord: "foster",
+    targetPos: "verb",
+    targetLine: 2,
+    isMcq: false,
+    mcqOptions: [],
+    hint: "Look for a base-form verb following the modal verb 'can' in line 2 that means to encourage or nurture something positive.",
+    targetSentence: "While maintaining an active online presence can foster social connection, it frequently triggers heightened anxiety...",
+    targetSentenceWithBlank: "While maintaining an active online presence can _____ social connection, it frequently triggers heightened anxiety...",
+    explanation: {
+      posMatch: "The target word must be a base-form verb following 'can'. 'Foster' is a verb meaning to promote or encourage growth.",
+      contextClue: "The contrast word 'While' sets up a balance: online presence can [foster / encourage] connection, BUT it also causes anxiety.",
+      substitution: "Replacing 'foster' with 'promote': '...can promote social connection...' maintains perfect grammar and logic.",
+      pitfall: "Watch out! Don't select 'maintaining' (gerund) or 'heightened' (adjective) as they belong to different parts of speech."
+    },
+    posAnnotations: {
+      teenagers: "noun", pressure: "noun", expectations: "noun",
+      face: "verb", foster: "verb", triggers: "verb", evaluate: "verb", advocating: "verb",
+      unprecedented: "adj", academic: "adj", social: "adj", active: "adj", online: "adj", heightened: "adj", idealised: "adj", digital: "adj", balanced: "adj",
+      frequently: "adv", continuously: "adv",
+      While: "contrast", Consequently: "cause"
+    }
+  },
+  {
+    id: "curated-2",
+    topic: "AI in Classrooms",
+    difficulty: "S4 Foundation",
+    lines: [
+      "1 The integration of artificial intelligence tools in Hong Kong secondary schools has sparked intense debate.",
+      "2 Proponents argue that generative software provides personalized learning assistance, making complex topics",
+      "3 accessible. Conversely, critics express skepticism regarding student dependence, warning that automated answers",
+      "4 may impede genuine critical thinking and problem-solving skills."
+    ],
+    passageRaw: "The integration of artificial intelligence tools in Hong Kong secondary schools has sparked intense debate. Proponents argue that generative software provides personalized learning assistance, making complex topics accessible. Conversely, critics express skepticism regarding student dependence, warning that automated answers may impede genuine critical thinking and problem-solving skills.",
+    questionType: "Antonym",
+    questionText: "Find a word in paragraph 1 which has the OPPOSITE meaning of 'assist' or 'facilitate'.",
+    targetWord: "impede",
+    targetPos: "verb",
+    targetLine: 4,
+    isMcq: false,
+    mcqOptions: [],
+    hint: "The question asks for an ANTONYM (opposite). Look for a base verb after 'may' in line 4 that means to hinder or slow down progress.",
+    targetSentence: "Conversely, critics express skepticism regarding student dependence, warning that automated answers may impede genuine critical thinking...",
+    targetSentenceWithBlank: "Conversely, critics express skepticism regarding student dependence, warning that automated answers may _____ genuine critical thinking...",
+    explanation: {
+      posMatch: "'Impede' is a base verb following modal verb 'may'. It directly contrasts with 'assist' or 'facilitate'.",
+      contextClue: "The contrast transition 'Conversely' introduces negative concerns from critics: automated answers might [impede / block] learning.",
+      substitution: "Replacing 'impede' with the opposite 'hinder': '...may hinder genuine critical thinking...' fits the context.",
+      pitfall: "Common HKDSE Trap: Choosing 'skepticism' or 'dependence'. Both are nouns, but the question requires a verb!"
+    },
+    posAnnotations: {
+      integration: "noun", intelligence: "noun", tools: "noun", debate: "noun", Proponents: "noun", assistance: "noun", critics: "noun", skepticism: "noun", dependence: "noun", thinking: "noun", skills: "noun",
+      sparked: "verb", argue: "verb", provides: "verb", express: "verb", impede: "verb",
+      artificial: "adj", intense: "adj", generative: "adj", personalized: "adj", complex: "adj", accessible: "adj", automated: "adj", genuine: "adj", critical: "adj",
+      Conversely: "contrast"
+    }
+  },
+  {
+    id: "curated-3",
+    topic: "Youth Green Habits",
+    difficulty: "S5/S6 Level 4-5*",
+    lines: [
+      "1 Single-use plastics remain a ubiquitous presence in local fast-food establishments across the territory.",
+      "2 Despite government campaigns urging citizens to adopt reusable cutlery, many consumers express reluctance",
+      "3 due to convenience factors. Environmental advocates emphasize that breaking deep-seated habits requires",
+      "4 persistent community education and stricter regulatory mandates."
+    ],
+    passageRaw: "Single-use plastics remain a ubiquitous presence in local fast-food establishments across the territory. Despite government campaigns urging citizens to adopt reusable cutlery, many consumers express reluctance due to convenience factors. Environmental advocates emphasize that breaking deep-seated habits requires persistent community education and stricter regulatory mandates.",
+    questionType: "Word Definition",
+    questionText: "Find a word in paragraph 1 which means 'found everywhere or extremely common'.",
+    targetWord: "ubiquitous",
+    targetPos: "adjective",
+    targetLine: 1,
+    isMcq: false,
+    mcqOptions: [],
+    hint: "Look for an adjective in line 1 before the noun 'presence' that describes how common single-use plastic is.",
+    targetSentence: "Single-use plastics remain a ubiquitous presence in local fast-food establishments across the territory.",
+    targetSentenceWithBlank: "Single-use plastics remain a _____ presence in local fast-food establishments across the territory.",
+    explanation: {
+      posMatch: "'Ubiquitous' is an adjective modifying the noun 'presence'. It fits the definition of being present everywhere.",
+      contextClue: "The sentence notes plastics are in 'local fast-food establishments across the territory', emphasizing how widespread they are.",
+      substitution: "Testing: 'Single-use plastics remain an extremely common presence...' perfectly retains the original meaning.",
+      pitfall: "Do not write 'reluctance' or 'convenience'. Check that your answer is an adjective describing plastics, not a human feeling."
+    },
+    posAnnotations: {
+      plastics: "noun", presence: "noun", establishments: "noun", territory: "noun", campaigns: "noun", citizens: "noun", cutlery: "noun", consumers: "noun", reluctance: "noun", advocates: "noun", habits: "noun", education: "noun", mandates: "noun",
+      remain: "verb", urging: "verb", adopt: "verb", express: "verb", emphasize: "verb", breaking: "verb", requires: "verb",
+      ubiquitous: "adj", local: "adj", reusable: "adj", environmental: "adj", "deep-seated": "adj", persistent: "adj", regulatory: "adj",
+      Despite: "contrast"
+    }
+  },
+  {
+    id: "curated-4",
+    topic: "Hong Kong Culture & Heritage",
+    difficulty: "S4 Foundation",
+    lines: [
+      "1 Master artisans who craft neon signage are becoming increasingly rare in modern Hong Kong.",
+      "2 As LED alternatives offer cheaper maintenance, traditional workshops are forced to close down.",
+      "3 Nevertheless, cultural conservators are striving to safeguard this iconic heritage through community workshops",
+      "4 and guided walks that engage younger generations."
+    ],
+    passageRaw: "Master artisans who craft neon signage are becoming increasingly rare in modern Hong Kong. As LED alternatives offer cheaper maintenance, traditional workshops are forced to close down. Nevertheless, cultural conservators are striving to safeguard this iconic heritage through community workshops and guided walks that engage younger generations.",
+    questionType: "MCQ Replacement",
+    questionText: "Which of the following words can replace 'safeguard' in line 3 without changing its meaning?",
+    targetWord: "protect",
+    targetPos: "verb",
+    targetLine: 3,
+    isMcq: true,
+    mcqOptions: [
+      "A. examine",
+      "B. protect",
+      "C. publicize",
+      "D. evaluate"
+    ],
+    hint: "Replace 'safeguard' in line 3 with each option. Which word means to defend or preserve cultural heritage from disappearing?",
+    targetSentence: "Nevertheless, cultural conservators are striving to safeguard this iconic heritage through community workshops...",
+    targetSentenceWithBlank: "Nevertheless, cultural conservators are striving to _____ this iconic heritage through community workshops...",
+    explanation: {
+      posMatch: "'Safeguard' is an infinitive verb ('to safeguard'). Option B 'protect' is also a base verb with the exact same meaning.",
+      contextClue: "Line 1-2 mention neon craft is 'rare' and workshops 'close down'. Conservators want to stop it from vanishing -> 'protect'.",
+      substitution: "Substitution: '...striving to protect this iconic heritage...' makes complete sense in context.",
+      pitfall: "Avoid 'publicize' (Option C). While workshops raise awareness, the main goal is preservation ('protect')."
+    },
+    posAnnotations: {
+      artisans: "noun", signage: "noun", alternatives: "noun", maintenance: "noun", workshops: "noun", conservators: "noun", heritage: "noun", walks: "noun", generations: "noun",
+      craft: "verb", becoming: "verb", offer: "verb", forced: "verb", striving: "verb", safeguard: "verb", engage: "verb",
+      neon: "adj", rare: "adj", modern: "adj", traditional: "adj", cultural: "adj", iconic: "adj", guided: "adj", younger: "adj",
+      increasingly: "adv",
+      Nevertheless: "contrast", As: "cause"
+    }
+  },
+  {
+    id: "curated-5",
+    topic: "E-sports & Youth Career",
+    difficulty: "S5/S6 Level 4-5*",
+    lines: [
+      "1 Competitive gaming was once dismissed as a trivial distraction by traditional parents and educators.",
+      "2 However, its recent recognition as a legitimate professional career has altered public perception dramatically.",
+      "3 Young gamers now undergo rigorous physical and mental training regimes, proving that e-sports demands immense",
+      "4 discipline and strategic foresight."
+    ],
+    passageRaw: "Competitive gaming was once dismissed as a trivial distraction by traditional parents and educators. However, its recent recognition as a legitimate professional career has altered public perception dramatically. Young gamers now undergo rigorous physical and mental training regimes, proving that e-sports demands immense discipline and strategic foresight.",
+    questionType: "Antonym",
+    questionText: "Find a word in paragraph 1 which has the OPPOSITE meaning of 'important' or 'significant'.",
+    targetWord: "trivial",
+    targetPos: "adjective",
+    targetLine: 1,
+    isMcq: false,
+    mcqOptions: [],
+    hint: "Look for an adjective in line 1 describing 'distraction' that implies something of little value or importance.",
+    targetSentence: "Competitive gaming was once dismissed as a trivial distraction by traditional parents and educators.",
+    targetSentenceWithBlank: "Competitive gaming was once dismissed as a _____ distraction by traditional parents and educators.",
+    explanation: {
+      posMatch: "'Trivial' is an adjective modifying 'distraction'. It means of little value or importance (opposite of 'significant').",
+      contextClue: "The contrast marker 'However' in line 2 shows a shift from viewing gaming as unimportant ('trivial') to a 'legitimate professional career'.",
+      substitution: "Substitution check: '...dismissed as an unimportant distraction...' proves 'trivial' is the exact opposite required.",
+      pitfall: "Do not select 'distraction' (noun) or 'dramatically' (adverb). Ensure word form alignment!"
+    },
+    posAnnotations: {
+      gaming: "noun", distraction: "noun", parents: "noun", educators: "noun", recognition: "noun", career: "noun", perception: "noun", gamers: "noun", regimes: "noun", discipline: "noun", foresight: "noun",
+      dismissed: "verb", altered: "verb", undergo: "verb", demands: "verb",
+      Competitive: "adj", trivial: "adj", traditional: "adj", recent: "adj", legitimate: "adj", professional: "adj", rigorous: "adj", physical: "adj", mental: "adj", immense: "adj", strategic: "adj",
+      dramatically: "adv", once: "adv", now: "adv",
+      However: "contrast"
+    }
+  }
+];
+
+// ==========================================
+// 2. GEMINI API SERVICE FOR CUSTOM GENERATION
+// ==========================================
+async function generateAiQuestion(questionTypes, difficulty) {
+  const apiKey = window.apiKey || "";
+  const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+  const systemInstruction = `You are an expert HKDSE English Language Paper 1 test writer specializing in vocabulary decoding for Hong Kong Secondary 4 students.
+Generate a JSON object containing a short 4-line passage, a single HKDSE-style vocabulary question, word annotations for learning tools, and a detailed explanation.
+Ensure strict HKDSE compliance: target words MUST be in the exact same part of speech and grammatical form as requested in the question prompt.`;
+
+  const prompt = `Generate a single-paragraph HKDSE vocabulary question.
+Choose an authentic, relevant Hong Kong youth or societal topic (e.g., Mental Health, AI in Classrooms, Green Habits, Heritage, E-sports, HK Housing, etc.).
+Question Type: Pick ONE question type from this allowed list: [${questionTypes.join(', ')}]
+Target Difficulty Level: ${difficulty}
+
+OUTPUT REQUIREMENTS:
+Return ONLY valid JSON matching this exact structure:
+{
+  "id": "ai-${Date.now()}",
+  "topic": "Name of chosen HK topic",
+  "difficulty": "${difficulty}",
+  "lines": [
+    "1 First line of passage...",
+    "2 Second line of passage...",
+    "3 Third line of passage...",
+    "4 Fourth line of passage..."
+  ],
+  "passageRaw": "Full passage text combined...",
+  "questionType": "Selected question type from the allowed list",
+  "questionText": "Find a word in paragraph 1 with a similar meaning to '...' OR Which of the following words can replace '...' in line X?",
+  "targetWord": "target_word_here",
+  "targetPos": "noun/verb/adjective/adverb",
+  "targetLine": 3,
+  "isMcq": true_if_MCQ_Replacement_otherwise_false,
+  "mcqOptions": ["A. option1", "B. option2", "C. option3", "D. option4"]_if_MCQ_otherwise_empty_array,
+  "hint": "Scaffolded hint pointing to line number and part of speech.",
+  "targetSentence": "Full sentence containing target word.",
+  "targetSentenceWithBlank": "Full sentence with _____ in place of target word.",
+  "explanation": {
+    "posMatch": "Explanation of part of speech match.",
+    "contextClue": "Explanation of context clues in paragraph.",
+    "substitution": "Sentence substituted with target meaning.",
+    "pitfall": "Common HKDSE word form trap warning."
+  },
+  "posAnnotations": {
+    "sampleWord": "noun/verb/adj/adv/contrast/cause"
+  }
+}`;
+
+  const payload = {
+    contents: [{ parts: [{ text: prompt }] }],
+    generationConfig: {
+      responseMimeType: "application/json"
+    },
+    systemInstruction: {
+      parts: [{ text: systemInstruction }]
+    }
+  };
+
+  let response;
+  let attempts = 0;
+  const maxAttempts = 3;
+  
+  while (attempts < maxAttempts) {
+    try {
+      response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (response.ok) break;
+    } catch (e) {
+      // Exponential backoff
+      await new Promise(r => setTimeout(r, Math.pow(2, attempts) * 1000));
+    }
+    attempts++;
+  }
+
+  if (!response || !response.ok) {
+    throw new Error("Failed to connect to Gemini API. Please try again or check network connection.");
+  }
+
+  const result = await response.json();
+  const textResult = result.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!textResult) {
+    throw new Error("Invalid response format from Gemini AI.");
+  }
+
+  const parsed = JSON.parse(textResult);
+  return parsed;
+}
+
+// ==========================================
+// 3. MAIN COMPONENT (App)
+// ==========================================
+export default function App() {
+  // Navigation & Mode
+  const [activeTab, setActiveTab] = useState('practice'); // 'practice' | 'ai_builder' | 'strategy' | 'stats'
+  
+  // Question & State
+  const [questionsList, setQuestionsList] = useState(CURATED_QUESTIONS);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [userAnswer, setUserAnswer] = useState('');
+  const [selectedMcq, setSelectedMcq] = useState('');
+  const [hasSubmitted, setHasSubmitted] = useState(false);
+  const [isCorrect, setIsCorrect] = useState(false);
+  const [showHint, setShowHint] = useState(false);
+  
+  // Helper & Highlight Filter
+  // 'none' | 'noun' | 'verb' | 'adj' | 'adv' | 'contrast'
+  const [posFilter, setPosFilter] = useState('none');
+
+  // Stats & Progress
+  const [stats, setStats] = useState({
+    totalAttempted: 0,
+    correctCount: 0,
+    streak: 0,
+    xp: 0,
+    byType: {
+      Synonym: { attempted: 0, correct: 0 },
+      Antonym: { attempted: 0, correct: 0 },
+      "Word Definition": { attempted: 0, correct: 0 },
+      "MCQ Replacement": { attempted: 0, correct: 0 }
+    }
+  });
+
+  // AI Generator Form State
+  const [aiConfig, setAiConfig] = useState({
+    questionTypes: ['Synonym'],
+    difficulty: 'S4 Foundation',
+    isLoading: false,
+    error: null
+  });
+
+  const currentQ = questionsList[currentIndex] || CURATED_QUESTIONS[0];
+
+  // Reset state when switching questions
+  useEffect(() => {
+    setUserAnswer('');
+    setSelectedMcq('');
+    setHasSubmitted(false);
+    setIsCorrect(false);
+    setShowHint(false);
+    setPosFilter('none');
+  }, [currentIndex, questionsList]);
+
+  // Handle Answer Verification
+  const handleSubmit = (e) => {
+    if (e) e.preventDefault();
+    if (hasSubmitted) return;
+
+    let submittedVal = currentQ.isMcq ? selectedMcq : userAnswer.trim();
+    if (!submittedVal) return;
+
+    let correct = false;
+    if (currentQ.isMcq) {
+      // Option matching (e.g., "B. protect" vs "protect")
+      const optionLetter = submittedVal.charAt(0).toUpperCase();
+      const targetLetter = currentQ.targetWord.charAt(0).toUpperCase();
+      
+      correct = submittedVal.toLowerCase().includes(currentQ.targetWord.toLowerCase()) || 
+                optionLetter === targetLetter ||
+                submittedVal.toLowerCase().split('. ')[1] === currentQ.targetWord.toLowerCase();
+    } else {
+      // Exact string match (case insensitive)
+      correct = submittedVal.toLowerCase() === currentQ.targetWord.toLowerCase();
+    }
+
+    setIsCorrect(correct);
+    setHasSubmitted(true);
+
+    // Update Stats
+    setStats(prev => {
+      const qType = currentQ.questionType || 'Synonym';
+      const prevTypeStats = prev.byType[qType] || { attempted: 0, correct: 0 };
+      
+      return {
+        ...prev,
+        totalAttempted: prev.totalAttempted + 1,
+        correctCount: prev.correctCount + (correct ? 1 : 0),
+        streak: correct ? prev.streak + 1 : 0,
+        xp: prev.xp + (correct ? 100 : 20),
+        byType: {
+          ...prev.byType,
+          [qType]: {
+            attempted: prevTypeStats.attempted + 1,
+            correct: prevTypeStats.correct + (correct ? 1 : 0)
+          }
+        }
+      };
+    });
+  };
+
+  // Generate Custom AI Question
+  const handleGenerateAi = async () => {
+    if (!aiConfig.questionTypes || aiConfig.questionTypes.length === 0) {
+      setAiConfig(prev => ({ ...prev, error: "Please select at least one question type." }));
+      return;
+    }
+
+    setAiConfig(prev => ({ ...prev, isLoading: true, error: null }));
+    try {
+      const newQuestion = await generateAiQuestion(
+        aiConfig.questionTypes,
+        aiConfig.difficulty
+      );
+      
+      setQuestionsList(prev => [newQuestion, ...prev]);
+      setCurrentIndex(0);
+      setActiveTab('practice');
+    } catch (err) {
+      setAiConfig(prev => ({ ...prev, error: err.message || "Error generating question." }));
+    } finally {
+      setAiConfig(prev => ({ ...prev, isLoading: false }));
+    }
+  };
+
+  // Helper function to render text with POS highlights
+  const renderAnnotatedLine = (lineText, posAnnotations, activeFilter) => {
+    if (activeFilter === 'none' || !posAnnotations) return lineText;
+
+    const words = lineText.split(/(\s+|[.,;!?()"]+)/);
+    return words.map((chunk, idx) => {
+      const cleanWord = chunk.trim().replace(/[.,;!?()"]/g, "");
+      const tag = posAnnotations[cleanWord] || posAnnotations[cleanWord.toLowerCase()];
+
+      if (tag && tag.toLowerCase() === activeFilter.toLowerCase()) {
+        let badgeColor = "bg-amber-100 text-amber-800 border-amber-300 font-semibold";
+        if (tag === "noun") badgeColor = "bg-blue-100 text-blue-800 border-blue-300 font-semibold";
+        if (tag === "verb") badgeColor = "bg-emerald-100 text-emerald-800 border-emerald-300 font-semibold";
+        if (tag === "adj") badgeColor = "bg-orange-100 text-orange-800 border-orange-300 font-semibold";
+        if (tag === "adv") badgeColor = "bg-purple-100 text-purple-800 border-purple-300 font-semibold";
+        if (tag === "contrast") badgeColor = "bg-rose-100 text-rose-800 border-rose-300 font-semibold ring-2 ring-rose-400";
+        if (tag === "cause") badgeColor = "bg-teal-100 text-teal-800 border-teal-300 font-semibold ring-2 ring-teal-400";
+
+        return (
+          <span key={idx} className={`px-1 py-0.5 rounded border ${badgeColor} inline-block transition-all shadow-sm mx-0.5`}>
+            {chunk}
+            <span className="text-[10px] uppercase font-bold ml-1 opacity-70">[{tag}]</span>
+          </span>
+        );
+      }
+      return chunk;
+    });
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-50 text-slate-800 font-sans selection:bg-indigo-100 selection:text-indigo-800 pb-12">
+      {/* ================= HEADER ================= */}
+      <header className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3.5 flex flex-col sm:flex-row items-center justify-between gap-4">
+          
+          {/* Logo & Subtitle */}
+          <div className="flex items-center gap-3">
+            <div className="bg-indigo-600 text-white p-2.5 rounded-xl shadow-md shadow-indigo-200">
+              <GraduationCap className="w-6 h-6" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-xl font-bold text-slate-900 tracking-tight">HKDSE VocabLab</h1>
+                <span className="bg-indigo-50 text-indigo-700 text-xs px-2 py-0.5 rounded-md font-semibold border border-indigo-200">
+                  S4 Edition
+                </span>
+              </div>
+              <p className="text-xs text-slate-500">Paper 1 Reading • Micro-Chunking Vocab Trainer</p>
+            </div>
+          </div>
+
+          {/* User Score & Streak Stats */}
+          <div className="flex items-center gap-4 bg-slate-100/80 px-4 py-1.5 rounded-xl border border-slate-200 text-sm">
+            <div className="flex items-center gap-1.5 text-amber-600 font-semibold" title="Daily Streak">
+              <Flame className="w-4 h-4 fill-amber-500" />
+              <span>{stats.streak} Streak</span>
+            </div>
+            <div className="w-px h-4 bg-slate-300" />
+            <div className="flex items-center gap-1.5 text-indigo-600 font-semibold" title="Total XP">
+              <Award className="w-4 h-4" />
+              <span>{stats.xp} XP</span>
+            </div>
+            <div className="w-px h-4 bg-slate-300" />
+            <div className="text-slate-600 text-xs font-medium">
+              Acc: <span className="text-slate-900 font-bold">{stats.totalAttempted ? Math.round((stats.correctCount / stats.totalAttempted) * 100) : 0}%</span>
+            </div>
+          </div>
+
+        </div>
+
+        {/* Navigation Tabs */}
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 flex gap-1 border-t border-slate-100 pt-1">
+          <button
+            onClick={() => setActiveTab('practice')}
+            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === 'practice'
+                ? 'border-indigo-600 text-indigo-600 bg-indigo-50/50'
+                : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+            }`}
+          >
+            <BookOpen className="w-4 h-4" />
+            Micro-Drill Practice
+          </button>
+
+          <button
+            onClick={() => setActiveTab('ai_builder')}
+            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === 'ai_builder'
+                ? 'border-indigo-600 text-indigo-600 bg-indigo-50/50'
+                : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+            }`}
+          >
+            <Sparkles className="w-4 h-4 text-indigo-500" />
+            AI Custom Generator
+          </button>
+
+          <button
+            onClick={() => setActiveTab('strategy')}
+            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === 'strategy'
+                ? 'border-indigo-600 text-indigo-600 bg-indigo-50/50'
+                : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+            }`}
+          >
+            <BrainCircuit className="w-4 h-4" />
+            HKDSE Strategy Guide
+          </button>
+
+          <button
+            onClick={() => setActiveTab('stats')}
+            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === 'stats'
+                ? 'border-indigo-600 text-indigo-600 bg-indigo-50/50'
+                : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+            }`}
+          >
+            <Target className="w-4 h-4" />
+            Performance Tracker
+          </button>
+        </div>
+      </header>
+
+      {/* ================= MAIN CONTAINER ================= */}
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 pt-6">
+
+        {/* TAB 1: PRACTICE DRILL MODE */}
+        {activeTab === 'practice' && (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+            {/* LEFT COLUMN: Passage & Question Interface */}
+            <div className="lg:col-span-8 space-y-6">
+
+              {/* Passage & Header Controls */}
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                
+                {/* Passage Header */}
+                <div className="bg-slate-800 text-white px-5 py-3.5 flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <span className="bg-indigo-500 text-white text-xs font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wide">
+                      {currentQ.difficulty}
+                    </span>
+                    <span className="text-slate-300 text-xs font-medium">
+                      Topic: <strong className="text-white">{currentQ.topic}</strong>
+                    </span>
+                  </div>
+
+                  {/* Question Index Navigator */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-slate-400 font-mono">
+                      Excerpts ({currentIndex + 1}/{questionsList.length})
+                    </span>
+                    <button
+                      onClick={() => setCurrentIndex((prev) => (prev > 0 ? prev - 1 : questionsList.length - 1))}
+                      className="p-1 rounded bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs transition"
+                      title="Previous Excerpt"
+                    >
+                      ←
+                    </button>
+                    <button
+                      onClick={() => setCurrentIndex((prev) => (prev < questionsList.length - 1 ? prev + 1 : 0))}
+                      className="p-1 rounded bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs transition"
+                      title="Next Excerpt"
+                    >
+                      →
+                    </button>
+                  </div>
+                </div>
+
+                {/* Interactive Part-of-Speech & Context Clue Toolbar */}
+                <div className="bg-slate-100/90 border-b border-slate-200 px-4 py-2.5 flex flex-wrap items-center gap-2 text-xs">
+                  <span className="text-slate-500 font-semibold flex items-center gap-1 mr-1">
+                    <Filter className="w-3.5 h-3.5" /> Clue Tools:
+                  </span>
+                  
+                  <button
+                    onClick={() => setPosFilter(posFilter === 'noun' ? 'none' : 'noun')}
+                    className={`px-2.5 py-1 rounded-md font-medium border transition ${
+                      posFilter === 'noun'
+                        ? 'bg-blue-600 text-white border-blue-700 shadow-sm'
+                        : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
+                    }`}
+                  >
+                    🟦 Nouns
+                  </button>
+
+                  <button
+                    onClick={() => setPosFilter(posFilter === 'verb' ? 'none' : 'verb')}
+                    className={`px-2.5 py-1 rounded-md font-medium border transition ${
+                      posFilter === 'verb'
+                        ? 'bg-emerald-600 text-white border-emerald-700 shadow-sm'
+                        : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
+                    }`}
+                  >
+                    🟩 Verbs
+                  </button>
+
+                  <button
+                    onClick={() => setPosFilter(posFilter === 'adj' ? 'none' : 'adj')}
+                    className={`px-2.5 py-1 rounded-md font-medium border transition ${
+                      posFilter === 'adj'
+                        ? 'bg-orange-600 text-white border-orange-700 shadow-sm'
+                        : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
+                    }`}
+                  >
+                    🟧 Adjectives
+                  </button>
+
+                  <button
+                    onClick={() => setPosFilter(posFilter === 'contrast' ? 'none' : 'contrast')}
+                    className={`px-2.5 py-1 rounded-md font-medium border transition ${
+                      posFilter === 'contrast'
+                        ? 'bg-rose-600 text-white border-rose-700 shadow-sm'
+                        : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
+                    }`}
+                  >
+                    ⚡ Contrast Clues
+                  </button>
+
+                  {posFilter !== 'none' && (
+                    <button
+                      onClick={() => setPosFilter('none')}
+                      className="text-slate-500 hover:text-slate-800 underline ml-auto text-xs"
+                    >
+                      Clear Filter
+                    </button>
+                  )}
+                </div>
+
+                {/* HKDSE Exam Reading Excerpt Box */}
+                <div className="p-6 bg-amber-50/30 border-b border-slate-200 font-serif leading-relaxed text-slate-900 text-lg sm:text-xl selection:bg-amber-200">
+                  <div className="space-y-3">
+                    {currentQ.lines.map((lineText, idx) => (
+                      <div key={idx} className="flex items-baseline gap-4 group">
+                        {/* Line Number Gutter */}
+                        <span className="font-sans text-xs font-bold text-amber-700/60 select-none w-4 text-right">
+                          {idx + 1}
+                        </span>
+                        {/* Line Content */}
+                        <div className="flex-1 font-serif text-slate-800">
+                          {renderAnnotatedLine(lineText.replace(/^\d+\s*/, ''), currentQ.posAnnotations, posFilter)}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Question Section */}
+                <div className="p-6 bg-white space-y-5">
+                  <div className="flex items-start gap-3">
+                    <div className="bg-indigo-100 text-indigo-700 font-bold p-2 rounded-lg mt-0.5">
+                      <HelpCircle className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-xs font-bold uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">
+                          Question Type: {currentQ.questionType}
+                        </span>
+                        <span className="text-xs text-slate-400 font-medium">
+                          Line {currentQ.targetLine} focus
+                        </span>
+                      </div>
+                      <p className="text-slate-900 font-semibold text-base sm:text-lg">
+                        {currentQ.questionText}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Scaffolding Hint Accordion */}
+                  <div className="border-t border-slate-100 pt-3">
+                    {!showHint ? (
+                      <button
+                        onClick={() => setShowHint(true)}
+                        className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition"
+                      >
+                        <Lightbulb className="w-3.5 h-3.5" /> Need a hint? Reveal Part-of-Speech Clue
+                      </button>
+                    ) : (
+                      <div className="bg-amber-50 border border-amber-200 rounded-xl p-3.5 text-xs text-amber-900 flex items-start gap-2.5">
+                        <Lightbulb className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                        <div>
+                          <strong className="font-semibold block mb-0.5">HKDSE Decoding Hint:</strong>
+                          {currentQ.hint}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Answer Input Form */}
+                  {!hasSubmitted ? (
+                    <form onSubmit={handleSubmit} className="space-y-4 pt-2">
+                      {currentQ.isMcq ? (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                          {currentQ.mcqOptions.map((option, idx) => (
+                            <button
+                              key={idx}
+                              type="button"
+                              onClick={() => setSelectedMcq(option)}
+                              className={`p-3 text-left rounded-xl text-sm font-medium border transition-all flex items-center justify-between ${
+                                selectedMcq === option
+                                  ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-100 ring-2 ring-indigo-300'
+                                  : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50 hover:border-slate-300'
+                              }`}
+                            >
+                              <span>{option}</span>
+                              {selectedMcq === option && <Check className="w-4 h-4 text-white" />}
+                            </button>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={userAnswer}
+                            onChange={(e) => setUserAnswer(e.target.value)}
+                            placeholder="Type exact single word or phrase from the text..."
+                            className="flex-1 px-4 py-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm font-medium text-slate-900 bg-white"
+                          />
+                          <button
+                            type="submit"
+                            disabled={!userAnswer.trim()}
+                            className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-semibold rounded-xl transition shadow-sm flex items-center gap-2"
+                          >
+                            Verify <ArrowRight className="w-4 h-4" />
+                          </button>
+                        </div>
+                      )}
+
+                      {currentQ.isMcq && (
+                        <button
+                          type="submit"
+                          disabled={!selectedMcq}
+                          className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-semibold rounded-xl transition shadow-sm flex items-center justify-center gap-2"
+                        >
+                          Confirm Choice <ArrowRight className="w-4 h-4" />
+                        </button>
+                      )}
+                    </form>
+                  ) : (
+                    /* FEEDBACK & HKDSE BREAKDOWN CARD */
+                    <div className={`p-5 rounded-2xl border ${
+                      isCorrect
+                        ? 'bg-emerald-50/80 border-emerald-200 text-emerald-900'
+                        : 'bg-rose-50/80 border-rose-200 text-rose-900'
+                    } space-y-4 animate-in fade-in duration-300`}>
+                      
+                      {/* Result Title */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 font-bold text-base sm:text-lg">
+                          {isCorrect ? (
+                            <>
+                              <CheckCircle2 className="w-6 h-6 text-emerald-600 shrink-0" />
+                              <span>Excellent! Correct Answer (+100 XP)</span>
+                            </>
+                          ) : (
+                            <>
+                              <XCircle className="w-6 h-6 text-rose-600 shrink-0" />
+                              <span>Not Quite right (+20 XP for effort)</span>
+                            </>
+                          )}
+                        </div>
+
+                        <span className="text-xs font-mono font-bold px-2.5 py-1 rounded-md bg-white border border-slate-200 text-slate-700 shadow-sm">
+                          Target: "{currentQ.targetWord}"
+                        </span>
+                      </div>
+
+                      {/* Detailed HKDSE Explanation Matrix */}
+                      <div className="bg-white/90 border border-slate-200 rounded-xl p-4 text-xs space-y-3 text-slate-700 shadow-sm">
+                        
+                        {/* 1. Part of Speech Match */}
+                        <div className="flex items-start gap-2">
+                          <span className="font-bold text-indigo-700 shrink-0 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-200">
+                            1. Grammatical Form:
+                          </span>
+                          <p>{currentQ.explanation.posMatch}</p>
+                        </div>
+
+                        {/* 2. Context Clue Highlight */}
+                        <div className="flex items-start gap-2">
+                          <span className="font-bold text-amber-700 shrink-0 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
+                            2. Context Clues:
+                          </span>
+                          <p>{currentQ.explanation.contextClue}</p>
+                        </div>
+
+                        {/* 3. Live Substitution Check */}
+                        <div className="flex items-start gap-2">
+                          <span className="font-bold text-emerald-700 shrink-0 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                            3. Substitution Check:
+                          </span>
+                          <p>{currentQ.explanation.substitution}</p>
+                        </div>
+
+                        {/* 4. Common Pitfall Warning */}
+                        <div className="flex items-start gap-2 pt-1 border-t border-slate-100 text-rose-700">
+                          <span className="font-bold shrink-0 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200">
+                            4. HKDSE Pitfall Warning:
+                          </span>
+                          <p>{currentQ.explanation.pitfall}</p>
+                        </div>
+
+                      </div>
+
+                      {/* Next Question Actions */}
+                      <div className="flex justify-end gap-3 pt-1">
+                        <button
+                          onClick={() => {
+                            if (currentIndex < questionsList.length - 1) {
+                              setCurrentIndex(prev => prev + 1);
+                            } else {
+                              setCurrentIndex(0);
+                            }
+                          }}
+                          className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs rounded-xl shadow transition flex items-center gap-2"
+                        >
+                          Next Excerpt Drill <ChevronRight className="w-4 h-4" />
+                        </button>
+                      </div>
+
+                    </div>
+                  )}
+
+                </div>
+
+              </div>
+
+            </div>
+
+            {/* RIGHT COLUMN: Strategy Quick-Panel & Excerpt Selector */}
+            <div className="lg:col-span-4 space-y-6">
+
+              {/* HKDSE 4-Step Checklist Box */}
+              <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
+                <div className="flex items-center gap-2 font-bold text-slate-900 text-sm border-b border-slate-100 pb-3">
+                  <GraduationCap className="w-4 h-4 text-indigo-600" />
+                  HKDSE 4-Step Decoding Method
+                </div>
+
+                <div className="space-y-3 text-xs">
+                  <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-start gap-2.5">
+                    <span className="bg-indigo-600 text-white font-bold text-[10px] w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5">1</span>
+                    <div>
+                      <strong className="text-slate-900 block">Unpack Question</strong>
+                      Identify synonym, antonym, or definition. Note paragraph restrictions.
+                    </div>
+                  </div>
+
+                  <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-start gap-2.5">
+                    <span className="bg-indigo-600 text-white font-bold text-[10px] w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5">2</span>
+                    <div>
+                      <strong className="text-slate-900 block">Match Part of Speech</strong>
+                      Adjective matches adjective, past verb matches past verb.
+                    </div>
+                  </div>
+
+                  <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-start gap-2.5">
+                    <span className="bg-indigo-600 text-white font-bold text-[10px] w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5">3</span>
+                    <div>
+                      <strong className="text-slate-900 block">Scan Context Clues</strong>
+                      Look for contrast words (*however*), cause-and-effect (*because*).
+                    </div>
+                  </div>
+
+                  <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-start gap-2.5">
+                    <span className="bg-indigo-600 text-white font-bold text-[10px] w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5">4</span>
+                    <div>
+                      <strong className="text-slate-900 block">Substitution Test</strong>
+                      Plug your candidate word back into the passage sentence to verify grammar.
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Excerpt Selection Bank */}
+              <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-3">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                  <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-indigo-600" /> Practice Bank ({questionsList.length})
+                  </h3>
+                </div>
+
+                <div className="space-y-2 max-h-[280px] overflow-y-auto pr-1 text-xs">
+                  {questionsList.map((q, idx) => (
+                    <button
+                      key={q.id}
+                      onClick={() => setCurrentIndex(idx)}
+                      className={`w-full text-left p-3 rounded-xl border transition flex items-center justify-between ${
+                        currentIndex === idx
+                          ? 'bg-indigo-50 border-indigo-300 text-indigo-900 font-semibold shadow-sm'
+                          : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+                      }`}
+                    >
+                      <div>
+                        <div className="text-[11px] font-mono text-slate-400 mb-0.5">{q.questionType} • {q.difficulty}</div>
+                        <div className="line-clamp-1">{q.topic}</div>
+                      </div>
+                      {currentIndex === idx && (
+                        <span className="w-2 h-2 rounded-full bg-indigo-600" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+        )}
+
+        {/* TAB 2: GEMINI AI CUSTOM GENERATOR */}
+        {activeTab === 'ai_builder' && (
+          <div className="max-w-3xl mx-auto space-y-6">
+            
+            <div className="bg-gradient-to-r from-indigo-900 to-slate-900 text-white p-6 sm:p-8 rounded-3xl shadow-lg relative overflow-hidden">
+              <div className="relative z-10 space-y-2">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/30 border border-indigo-400/30 text-indigo-200 text-xs font-semibold">
+                  <Sparkles className="w-3.5 h-3.5 text-indigo-300" /> Powered by Gemini 3 Flash AI
+                </div>
+                <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Infinite HKDSE Excerpt Generator</h2>
+                <p className="text-slate-300 text-xs sm:text-sm max-w-xl leading-relaxed">
+                  Generate customized, authentic single-paragraph reading passages paired with HKDSE Paper 1 vocabulary questions on demand.
+                </p>
+              </div>
+            </div>
+
+            {/* Generator Form */}
+            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-5">
+              
+              {/* Question Types Multi-Select */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
+                    HKDSE Question Types (Select 1 or more):
+                  </label>
+                  <span className="text-[11px] text-indigo-600 font-medium">
+                    {aiConfig.questionTypes.length} selected
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {["Synonym", "Antonym", "Word Definition", "MCQ Replacement"].map((type) => {
+                    const isSelected = aiConfig.questionTypes.includes(type);
+                    return (
+                      <button
+                        key={type}
+                        type="button"
+                        onClick={() => {
+                          let updated = [...aiConfig.questionTypes];
+                          if (isSelected) {
+                            if (updated.length > 1) {
+                              updated = updated.filter(t => t !== type);
+                            }
+                          } else {
+                            updated.push(type);
+                          }
+                          setAiConfig({ ...aiConfig, questionTypes: updated, error: null });
+                        }}
+                        className={`p-3 text-xs font-semibold rounded-xl border transition flex items-center justify-between ${
+                          isSelected
+                            ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                            : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                        }`}
+                      >
+                        <span>{type}</span>
+                        {isSelected && <Check className="w-3.5 h-3.5 text-white shrink-0 ml-1" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Option 3: Target Difficulty */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
+                  Target HKDSE Level:
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  {["S4 Foundation", "S5/S6 Level 4-5*"].map((lvl) => (
+                    <button
+                      key={lvl}
+                      type="button"
+                      onClick={() => setAiConfig({ ...aiConfig, difficulty: lvl })}
+                      className={`p-3 text-xs font-semibold rounded-xl border transition ${
+                        aiConfig.difficulty === lvl
+                          ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                          : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                      }`}
+                    >
+                      {lvl}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Error Box */}
+              {aiConfig.error && (
+                <div className="bg-rose-50 border border-rose-200 text-rose-800 text-xs p-3.5 rounded-xl flex items-center gap-2">
+                  <XCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                  <span>{aiConfig.error}</span>
+                </div>
+              )}
+
+              {/* Submit Generate Button */}
+              <button
+                onClick={handleGenerateAi}
+                disabled={aiConfig.isLoading}
+                className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition shadow-md shadow-indigo-200 flex items-center justify-center gap-2 text-sm disabled:opacity-50"
+              >
+                {aiConfig.isLoading ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" /> Generating HKDSE Passage...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4" /> Generate Custom Excerpt & Question
+                  </>
+                )}
+              </button>
+
+            </div>
+
+          </div>
+        )}
+
+        {/* TAB 3: HKDSE STRATEGY GUIDE */}
+        {activeTab === 'strategy' && (
+          <div className="max-w-4xl mx-auto space-y-6">
+            
+            <div className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm space-y-6">
+              <div className="border-b border-slate-100 pb-4">
+                <span className="text-xs font-bold uppercase tracking-wider text-indigo-600">Exam Strategy Blueprint</span>
+                <h2 className="text-2xl font-bold text-slate-900">How to Master HKDSE Paper 1 Vocabulary Questions</h2>
+                <p className="text-xs sm:text-sm text-slate-500 mt-1">
+                  Step-by-step techniques for S4 students to decode unfamiliar words using context and grammar.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                
+                {/* Method 1 */}
+                <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+                  <div className="flex items-center gap-2 text-indigo-600 font-bold text-sm">
+                    <span className="bg-indigo-600 text-white text-xs w-6 h-6 rounded-full flex items-center justify-center">1</span>
+                    Strict Part-of-Speech Matching
+                  </div>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    HKDSE vocabulary answers <strong>must always match the exact part of speech</strong> and grammatical form of the target word.
+                  </p>
+                  <div className="bg-white p-2.5 rounded-lg border border-slate-200 text-[11px] font-mono text-slate-700">
+                    Example: If target is adjective 'relaxing', answer MUST be adjective 'stressful', NOT noun 'stress'.
+                  </div>
+                </div>
+
+                {/* Method 2 */}
+                <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+                  <div className="flex items-center gap-2 text-indigo-600 font-bold text-sm">
+                    <span className="bg-indigo-600 text-white text-xs w-6 h-6 rounded-full flex items-center justify-center">2</span>
+                    Leveraging Contrast Markers
+                  </div>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    Words like <em>however, while, despite, on the other hand</em> signal opposite ideas across sentences.
+                  </p>
+                  <div className="bg-white p-2.5 rounded-lg border border-slate-200 text-[11px] font-mono text-slate-700">
+                    "While online sharing fosters connection, it triggers [ heightened ] anxiety..."
+                  </div>
+                </div>
+
+                {/* Method 3 */}
+                <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+                  <div className="flex items-center gap-2 text-indigo-600 font-bold text-sm">
+                    <span className="bg-indigo-600 text-white text-xs w-6 h-6 rounded-full flex items-center justify-center">3</span>
+                    Cause-and-Effect Connectors
+                  </div>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    Look for connectors like <em>because, as a result, consequently, leads to</em> that explain logical consequences.
+                  </p>
+                  <div className="bg-white p-2.5 rounded-lg border border-slate-200 text-[11px] font-mono text-slate-700">
+                    "Feel compelled because friends tell them to do it" → 'Compelled' = forced.
+                  </div>
+                </div>
+
+                {/* Method 4 */}
+                <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+                  <div className="flex items-center gap-2 text-indigo-600 font-bold text-sm">
+                    <span className="bg-indigo-600 text-white text-xs w-6 h-6 rounded-full flex items-center justify-center">4</span>
+                    The Sentence Substitution Test
+                  </div>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    Always replace the target word in the original text with your answer. Read aloud in your head to check grammar.
+                  </p>
+                  <div className="bg-white p-2.5 rounded-lg border border-slate-200 text-[11px] font-mono text-slate-700">
+                    If substituted sentence sounds natural and preserves meaning, your choice is verified!
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+          </div>
+        )}
+
+        {/* TAB 4: PERFORMANCE TRACKER */}
+        {activeTab === 'stats' && (
+          <div className="max-w-4xl mx-auto space-y-6">
+            
+            <div className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm space-y-6">
+              <div className="border-b border-slate-100 pb-4">
+                <span className="text-xs font-bold uppercase tracking-wider text-indigo-600">Progress Analytics</span>
+                <h2 className="text-2xl font-bold text-slate-900">Your HKDSE Vocabulary Proficiency</h2>
+              </div>
+
+              {/* Main Metric Cards */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div className="bg-slate-50 border border-slate-200 p-4 rounded-2xl text-center space-y-1">
+                  <div className="text-slate-400 text-xs font-semibold">Attempted</div>
+                  <div className="text-2xl font-bold text-slate-900">{stats.totalAttempted}</div>
+                </div>
+
+                <div className="bg-slate-50 border border-slate-200 p-4 rounded-2xl text-center space-y-1">
+                  <div className="text-slate-400 text-xs font-semibold">Correct</div>
+                  <div className="text-2xl font-bold text-emerald-600">{stats.correctCount}</div>
+                </div>
+
+                <div className="bg-slate-50 border border-slate-200 p-4 rounded-2xl text-center space-y-1">
+                  <div className="text-slate-400 text-xs font-semibold">Accuracy</div>
+                  <div className="text-2xl font-bold text-indigo-600">
+                    {stats.totalAttempted ? Math.round((stats.correctCount / stats.totalAttempted) * 100) : 0}%
+                  </div>
+                </div>
+
+                <div className="bg-slate-50 border border-slate-200 p-4 rounded-2xl text-center space-y-1">
+                  <div className="text-slate-400 text-xs font-semibold">Current Streak</div>
+                  <div className="text-2xl font-bold text-amber-600 flex items-center justify-center gap-1">
+                    <Flame className="w-5 h-5 fill-amber-500" /> {stats.streak}
+                  </div>
+                </div>
+              </div>
+
+              {/* Accuracy Breakdown by Question Type */}
+              <div className="space-y-3 pt-2">
+                <h3 className="text-sm font-bold text-slate-900">Skill Mastery Breakdown</h3>
+                
+                {Object.entries(stats.byType).map(([type, data]) => {
+                  const pct = data.attempted ? Math.round((data.correct / data.attempted) * 100) : 0;
+                  return (
+                    <div key={type} className="space-y-1 text-xs">
+                      <div className="flex justify-between font-semibold">
+                        <span className="text-slate-700">{type} Questions</span>
+                        <span className="text-slate-500">{data.correct}/{data.attempted} ({pct}%)</span>
+                      </div>
+                      <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
+                        <div
+                          className="h-full bg-indigo-600 rounded-full transition-all duration-500"
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+            </div>
+
+          </div>
+        )}
+
+      </main>
+    </div>
+  );
+}
